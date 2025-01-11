@@ -1,4 +1,5 @@
 import asyncio
+import httpx
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
 from amazon_transcribe.model import TranscriptEvent
@@ -11,14 +12,56 @@ app = FastAPI()
 logger = logging.getLogger('uvicorn.error')
 logger.setLevel(logging.INFO)
 
+buffer = []
+max_tokens = 5
+WEBHOOK_URL = "https://webhook.site/9d751c97-7ebd-47ec-9139-23b461fa6d6d"
+
+
 class MyEventHandler(TranscriptResultStreamHandler):
     async def handle_transcript_event(self, transcript_event: TranscriptEvent):
+        global buffer
         results = transcript_event.transcript.results
         for result in results:
+            if result.is_partial:
+                continue
+
             for alt in result.alternatives:
                 transcript = alt.transcript
                 logger.info(f"Transcript received: {transcript}")  # 텍스트 로그 출력
-                print(transcript)  # 출력된 텍스트를 원하는 곳으로 보내도록 수정 가능
+                await self.send_webhook(WEBHOOK_URL, {"text": transcript})
+                buffer.append(transcript)  # 버퍼에 텍스트 추가
+
+                # 현재 버퍼의 총 토큰 수 계산
+                total_tokens = sum(len(t.split()) for t in buffer)
+
+                # 토큰 임계값 초과 시 버퍼 내용 저장
+                if total_tokens >= max_tokens:
+                    await self.save_partial_buffer_to_database()
+
+    async def send_webhook(self, url: str, payload: dict):
+        async with httpx.AsyncClient() as client:
+            await client.post(url, json=payload)
+
+    async def save_partial_buffer_to_database(self):
+        """
+        버퍼에서 일정 토큰 수만 추출하여 데이터베이스로 저장하고,
+        나머지는 버퍼에 남겨둠.
+        """
+        global buffer
+        # 현재 버퍼를 하나의 텍스트로 합침
+        full_text = " ".join(buffer)
+        tokens = full_text.split()  # 버퍼의 모든 텍스트를 토큰 단위로 분리
+
+        # 저장할 토큰과 남길 토큰 분리
+        to_save = tokens[:max_tokens]  # 저장할 첫 40 토큰
+        to_keep = tokens[max_tokens:]  # 남겨둘 나머지 토큰
+
+        # 저장할 텍스트와 남길 텍스트로 분리
+        save_text = " ".join(to_save)
+        buffer = [" ".join(to_keep)]  # 남겨진 토큰을 다시 버퍼에 저장
+
+        # 로그로 저장 작업 출력 (실제 DB 코드로 대체 가능)
+        logger.info(f"Saving to database: {save_text}")
 
 
 async def websocket_audio_stream(websocket: WebSocket):
@@ -27,14 +70,16 @@ async def websocket_audio_stream(websocket: WebSocket):
     """
     await websocket.accept()
     logger.info("WebSocket connection accepted.")  # WebSocket 연결 수락 로그
-    while True:
-        try:
-            data = await websocket.receive_bytes()  # WebSocket으로부터 오디오 데이터 수신
-            logger.info(f"Received audio data: {len(data)} bytes.")  # 수신 데이터 크기 로그
-            yield data  # AWS Transcribe로 전송할 데이터를 yield
-        except WebSocketDisconnect:
-            logger.info("WebSocket connection closed.")  # WebSocket 연결 종료 로그
-            break
+    with open("debug_audio.raw", "wb") as f:
+        while True:
+            try:
+                data = await websocket.receive_bytes()  # WebSocket으로부터 오디오 데이터 수신
+                # logger.info(f"Received audio data: {len(data)} bytes.")  # 수신 데이터 크기 로그
+                f.write(data)
+                yield data  # AWS Transcribe로 전송할 데이터를 yield
+            except WebSocketDisconnect:
+                logger.info("WebSocket connection closed.")  # WebSocket 연결 종료 로그
+                break
 
 
 async def write_chunks_to_transcribe(stream, websocket: WebSocket):
@@ -43,7 +88,7 @@ async def write_chunks_to_transcribe(stream, websocket: WebSocket):
     """
     logger.info("Starting to write audio chunks to Transcribe.")  # 데이터 전송 시작 로그
     async for audio_chunk in websocket_audio_stream(websocket):
-        logger.info(f"Sending audio chunk of size {len(audio_chunk)} bytes to Transcribe.")  # 전송 데이터 크기 로그
+        # logger.info(f"Sending audio chunk of size {len(audio_chunk)} bytes to Transcribe.")  # 전송 데이터 크기 로그
         await stream.input_stream.send_audio_event(audio_chunk=audio_chunk)
     logger.info("All audio chunks sent. Ending stream.")  # 전송 완료 로그
     await stream.input_stream.end_stream()
