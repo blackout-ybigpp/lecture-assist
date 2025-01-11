@@ -1,0 +1,16 @@
+[entryPoints]
+web.address = ":80"
+websecure.address = ":443"
+
+[providers.docker]
+network = "traefik"      # To prevent round robin
+
+[certificatesResolvers.resolver.acme]
+email = "csj6922@naver.com"
+storage = "acme.json"
+tlschallenge = true
+
+[api]
+insecure = true
+
+[accessLog]

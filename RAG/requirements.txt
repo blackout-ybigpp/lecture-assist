@@ -1,0 +1,7 @@
+pandas
+python-dotenv
+langchain_postgres
+langchain_openai
+langchain
+langchain_aws
+psycopg2
