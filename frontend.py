@@ -1,54 +1,69 @@
-import streamlit as st
 import asyncio
-import websockets
+import streamlit as st
 import sounddevice as sd
-import numpy as np
-from io import BytesIO
-import wave
+import websockets
 
-# Streamlit UI
-st.title("Real-Time Voice Input with Streamlit")
-st.text("Press the button to start recording your voice.")
+# WebSocket 서버 주소
+WEBSOCKET_URL = "wss://4fd7-54-145-137-212.ngrok-free.app/socket"
 
-# Parameters
-SAMPLE_RATE = 16000  # 48 kHz
-CHANNELS = 1  # Mono audio
-DURATION = 5  # Duration for testing purposes (in seconds)
-BUFFER_SIZE = 1024  # Buffer size for WebSocket streaming
-SERVER_URL = "ws://localhost:8000/stream"  # Replace with your backend WebSocket server URL
+# 스트림 설정
+SAMPLE_RATE = 16000  # 서버와 동일한 샘플링 레이트
+CHANNELS = 1         # 모노
+BLOCKSIZE = 1024     # 전송 블록 크기
 
-# Audio Recording Function
-def record_audio():
-    st.write("Recording...")
-    audio_data = BytesIO()
+# 스트림 상태 관리
+st.title("Real-Time Audio Streaming")
+st.markdown("Click **Start Streaming** to send audio to the server.")
+streaming_status = st.empty()
+start_button = st.button("Start Streaming")
+stop_button = st.button("Stop Streaming", disabled=True)
 
-    def callback(indata, frames, time, status):
-        audio_data.write(indata.tobytes())
+# 스트리밍 상태
+is_streaming = False
 
-    with sd.InputStream(samplerate=SAMPLE_RATE, channels=CHANNELS, dtype="int16", callback=callback):
-        sd.sleep(int(DURATION * 1000))
+async def audio_stream(loop):
+    """
+    마이크 입력 데이터를 WebSocket으로 스트리밍합니다.
+    """
+    global is_streaming
+    async with websockets.connect(WEBSOCKET_URL) as websocket:
+        # Sounddevice 콜백 함수 정의
+        def callback(indata, frames, time, status):
+            if is_streaming:
+                asyncio.run_coroutine_threadsafe(
+                    websocket.send(indata.tobytes()), loop
+                )
 
-    audio_data.seek(0)
-    return audio_data
+        # 마이크 입력 스트림 시작
+        with sd.InputStream(
+            samplerate=SAMPLE_RATE, channels=CHANNELS, callback=callback, blocksize=BLOCKSIZE, dtype="int16"
+        ):
+            while is_streaming:
+                await asyncio.sleep(0.1)  # 짧은 대기 시간으로 이벤트 루프 유지
 
-# WebSocket Stream Function
-async def stream_audio_to_server(audio_data):
-    async with websockets.connect(SERVER_URL) as websocket:
-        # Read audio data in chunks and send to server
-        while chunk := audio_data.read(BUFFER_SIZE):
-            await websocket.send(chunk)
+async def main():
+    """
+    WebSocket으로 오디오 스트리밍을 제어합니다.
+    """
+    global is_streaming
+    loop = asyncio.get_event_loop()
+    streaming_status.text("Starting streaming...")
+    try:
+        is_streaming = True
+        await audio_stream(loop)
+    except Exception as e:
+        streaming_status.text(f"Error: {e}")
+    finally:
+        is_streaming = False
+        streaming_status.text("Streaming stopped.")
 
-        # End of audio stream
-        await websocket.send(b"END")
+# 버튼 클릭 이벤트 처리
+if start_button:
+    asyncio.run(main())
+    stop_button.disabled = False
+    start_button.disabled = True
 
-        # Receive response
-        response = await websocket.recv()
-        st.text(f"Transcription from server: {response}")
-
-# Button to Start Recording
-if st.button("Start Recording"):
-    audio_data = record_audio()
-    st.text("Audio recording finished.")
-
-    # Send audio data to the server
-    asyncio.run(stream_audio_to_server(audio_data))
+if stop_button and not stop_button.disabled:
+    is_streaming = False
+    stop_button.disabled = True
+    start_button.disabled = False
