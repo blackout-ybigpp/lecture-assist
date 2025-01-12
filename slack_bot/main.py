@@ -1,5 +1,7 @@
+import base64
 import os
 
+import requests
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 
@@ -33,6 +35,25 @@ def append_text_canvas(canvas_id, text):
                     "type": "markdown",
                     "markdown": text,
                 },
+            }
+        ],
+    )
+
+
+def append_image_canvas(channel_id, image):
+    image_base64 = base64.b64encode(image).decode("utf-8")
+
+    id = requests.post(
+        f"{os.environ.get("IMAGE_SERVER")}", json={"image": image_base64}
+    ).text
+
+    client.chat_postMessage(
+        channel=channel_id,
+        blocks=[
+            {
+                "type": "image",
+                "image_url": f"{os.environ.get("IMAGE_SERVER")}/{id}",
+                "alt_text": "alt text for image",
             }
         ],
     )
