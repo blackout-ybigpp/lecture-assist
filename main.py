@@ -15,12 +15,12 @@ from RAG import mindmap
 from slack_bot import bot_main
 from langchain_aws import BedrockEmbeddings
 from starlette.responses import StreamingResponse
+from urllib import parse
 
 from fastapi.responses import FileResponse
 import os
 
 import logging
-from urllib import parse
 
 app = FastAPI()
 
@@ -139,13 +139,14 @@ async def write_chunks_to_transcribe(stream, websocket: WebSocket):
 
 
 async def start_transcription(
-    websocket: WebSocket, user_id: str = None, channel_id: int = None, title: str = None
+    websocket: WebSocket, user_id: str = None, channel_id: str = None, title: str = None
 ):
     """
     WebSocket에서 받은 데이터를 AWS Transcribe로 처리.
     """
     logger.info("Initializing AWS Transcribe client.")  # 클라이언트 초기화 로그
     client = TranscribeStreamingClient(region="us-east-1")  # AWS 리전 설정
+    print(user_id, channel_id, title)
 
     # AWS Transcribe 스트림 시작
     stream = await client.start_stream_transcription(
@@ -174,18 +175,17 @@ async def start_transcription(
 
 
 @app.websocket("/socket")
-async def websocket_endpoint(websocket: WebSocket, user_id: str = None, channel_id: int = None, title: str = None):
+async def websocket_endpoint(websocket: WebSocket, user_id: str = None, channel_id: str = None, title: str = None):
     """
     WebSocket 엔드포인트로 들어온 데이터를 AWS Transcribe로 전달합니다.
     """
+    title = parse.unquote(title)
     logger.info(f"WebSocket endpoint triggered with user_id: {user_id}, channel_id: {channel_id}, title: {title}")
 
-    title = parse.unquote(title)
-
-    try:
-        await start_transcription(websocket)
-    except Exception as e:
-        logger.error(f"Error occurred: {e}")  # 예외 발생 로그
+    # try:
+    await start_transcription(websocket, user_id, channel_id, title)
+    # except Exception as e:
+    #     logger.error(f"Error occurred: {e}")  # 예외 발생 로그
 
 
 class Item(BaseModel):
