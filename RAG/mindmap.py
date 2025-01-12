@@ -90,7 +90,7 @@ def visualize_graph(G, title="Lecture Summary Visualization"):
     plt.savefig('mind_map.png')
 
 # Main Function
-def main():
+def mind_map():
     # Fetch summaries from database
     summaries = fetch_summaries_from_db(postgres_url, table_name)
     
@@ -101,6 +101,9 @@ def main():
     # Parse and visualize the hierarchical summary
     graph = parse_structure_to_graph(hierarchical_summary)
     visualize_graph(graph)
+    
+    with open('mind_map.png', 'wb') as f:
+        mindmap = f.read()
+    
+    return mindmap
 
-if __name__ == "__main__":
-    main()
