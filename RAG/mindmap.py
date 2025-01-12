@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, text
 from langchain_aws import ChatBedrock
 import matplotlib.pyplot as plt
 import networkx as nx
+import os
 
 # Database Connection
 postgres_url = "postgresql://postgres:blackout-26+@blackout-26-2.cj24wem202yj.us-east-1.rds.amazonaws.com:5432/postgres"
@@ -101,7 +102,8 @@ def mind_map():
     # Parse and visualize the hierarchical summary
     graph = parse_structure_to_graph(hierarchical_summary)
     visualize_graph(graph)
-    mindmap = "/home/ubuntu/RAG/mind_map.png"
+    file_name = "mind_map.png"
+    file_path = os.path.join(os.getcwd(), file_name)
     
-    return mindmap
+    return file_path
 
