@@ -101,9 +101,7 @@ def mind_map():
     # Parse and visualize the hierarchical summary
     graph = parse_structure_to_graph(hierarchical_summary)
     visualize_graph(graph)
-    
-    with open('mind_map.png', 'wb') as f:
-        mindmap = f.read()
+    mindmap = "/home/ubuntu/RAG/mind_map.png"
     
     return mindmap
 
