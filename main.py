@@ -20,6 +20,7 @@ from fastapi.responses import FileResponse
 import os
 
 import logging
+from urllib import parse
 
 app = FastAPI()
 
@@ -178,6 +179,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str = None, channel_
     WebSocket 엔드포인트로 들어온 데이터를 AWS Transcribe로 전달합니다.
     """
     logger.info(f"WebSocket endpoint triggered with user_id: {user_id}, channel_id: {channel_id}, title: {title}")
+
+    title = parse.unquote(title)
 
     try:
         await start_transcription(websocket)
