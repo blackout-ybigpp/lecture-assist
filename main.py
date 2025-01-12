@@ -33,6 +33,10 @@ WEBHOOK_URL = "https://webhook.site/9d751c97-7ebd-47ec-9139-23b461fa6d6d"
 
 
 class MyEventHandler(TranscriptResultStreamHandler):
+    def set_canvas(self, transcription, summarize):
+        self.transcription_canvas_id = transcription
+        self.summarize_canvas_id = summarize
+
     async def handle_transcript_event(self, transcript_event: TranscriptEvent):
         global buffer
         results = transcript_event.transcript.results
@@ -99,6 +103,8 @@ class MyEventHandler(TranscriptResultStreamHandler):
         if result == "True":
             print(f"Topic transition detected. Summary:\n{summary}")
             sum_sen.save_summary_to_db(postgres_url, table_name, summary, metadata=None)
+            bot_main.append_text_canvas(self.transcription_canvas_id, save_text)
+            bot_main.append_text_canvas(self.summarize_canvas_id, summary)
 
 
 async def websocket_audio_stream(websocket: WebSocket):
@@ -131,7 +137,9 @@ async def write_chunks_to_transcribe(stream, websocket: WebSocket):
     await stream.input_stream.end_stream()
 
 
-async def start_transcription(websocket: WebSocket):
+async def start_transcription(
+    websocket: WebSocket, user_id: str = None, channel_id: int = None, title: str = None
+):
     """
     WebSocket에서 받은 데이터를 AWS Transcribe로 처리.
     """
@@ -148,11 +156,20 @@ async def start_transcription(websocket: WebSocket):
 
     # AWS Transcribe 이벤트 처리 핸들러
     handler = MyEventHandler(stream.output_stream)
+    handler.set_canvas(
+        bot_main.create_canvas(title, user_id, channel_id),
+        bot_main.create_canvas(title, user_id, channel_id),
+    )
 
     # 데이터 전송 및 이벤트 핸들링
     logger.info("Starting transcription and event handling.")  # 트랜스크립션 처리 시작 로그
     await asyncio.gather(write_chunks_to_transcribe(stream, websocket), handler.handle_events())
     logger.info("Transcription and event handling completed.")  # 트랜스크립션 처리 완료 로그
+    file_path = mindmap.mind_map()
+    if not os.path.exists(file_path):
+        return {"error": "File not found"}
+    else:
+        bot_main.send_image_to_channel(channel_id, open(file_path, "rb").read())
 
 
 @app.websocket("/socket")
