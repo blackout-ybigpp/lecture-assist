@@ -40,7 +40,7 @@ def append_text_canvas(canvas_id, text):
     )
 
 
-def append_image_canvas(channel_id, image):
+def send_image_to_chat(channel_id, image):
     image_base64 = base64.b64encode(image).decode("utf-8")
 
     id = requests.post(
