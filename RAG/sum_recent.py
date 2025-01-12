@@ -24,7 +24,7 @@ def fetch_recent_documents(limit=10):
     query = text(f"""
         SELECT document
         FROM {TABLE_NAME}
-        ORDER BY id DESC
+        ORDER BY created_at DESC
         LIMIT :limit
     """)
     with engine.connect() as connection:
@@ -68,7 +68,9 @@ def sum_recent():
         return
 
     # 요약 생성
+    print(recent_documents)
     summary = summarize_documents(recent_documents)
+    print(summary)
 
     # 결과 출력
     return summary
