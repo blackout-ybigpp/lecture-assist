@@ -181,13 +181,17 @@ async def echo_message(item: Item):
     response = rag_qa.qa(item.text)
     print(response)
     bot_main.send_text_to_channel(item.channel_id, response)
-    # return {"message": rag_qa.qa(item.message)}
+
+
+class Item2(BaseModel):
+    channel_id: str
 
 
 @app.get("/recent")
-async def summery_recent():
-    # print(sum_recent.sum_recent())
-    return sum_recent.sum_recent()
+async def summery_recent(item: Item2):
+    response = sum_recent.sum_recent()
+    print(response)
+    bot_main.send_text_to_channel(item.channel_id, response)
 
 
 @app.get("/mindmap")
