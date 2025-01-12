@@ -5,9 +5,9 @@ import websockets
 
 # WebSocket 서버 주소
 WEBSOCKET_URL = "wss://4fd7-54-145-137-212.ngrok-free.app/socket"
-USER_ID = "123"
-CHANNEL_ID = "456"
-TITLE = "ddf"
+USER_ID = st.query_params["user_id"]
+CHANNEL_ID = st.query_params["channel_id"]
+TITLE = st.query_params["title"]
 
 # 스트림 설정
 SAMPLE_RATE = 16000  # 서버와 동일한 샘플링 레이트
