@@ -180,6 +180,5 @@ Remember:
         
 if __name__ == "__main__":
 
-    while True:
-        query = input("\n질문을 입력하세요: ").strip()
-        answer = qa(query)
+    query = input("\n질문을 입력하세요: ").strip()
+    answer = qa(query)
