@@ -17,7 +17,22 @@ def create_canvas(title, user_id, channel_id):
         canvas_id=canvas_id,
         access_level="write",
         user_ids=[user_id],
-        # channel_ids=[channel_id],
+        channel_ids=[channel_id],
     )
 
     return canvas_id
+
+
+def append_text_canvas(canvas_id, text):
+    client.canvases_edit(
+        canvas_id=canvas_id,
+        changes=[
+            {
+                "operation": "insert_at_end",
+                "document_content": {
+                    "type": "markdown",
+                    "markdown": text,
+                },
+            }
+        ],
+    )
