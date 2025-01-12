@@ -40,7 +40,7 @@ def append_text_canvas(canvas_id, text):
     )
 
 
-def send_image_to_chat(channel_id, image):
+def send_image_to_channel(channel_id, image):
     image_base64 = base64.b64encode(image).decode("utf-8")
 
     id = requests.post(
@@ -54,6 +54,21 @@ def send_image_to_chat(channel_id, image):
                 "type": "image",
                 "image_url": f"{os.environ.get("IMAGE_SERVER")}/{id}",
                 "alt_text": "alt text for image",
+            }
+        ],
+    )
+
+
+def send_text_to_channel(channel_id, text):
+    client.chat_postMessage(
+        channel=channel_id,
+        blocks=[
+            {
+                "type": "section",
+                "text": {
+                    "type": "plain_text",
+                    "text": text,
+                },
             }
         ],
     )
