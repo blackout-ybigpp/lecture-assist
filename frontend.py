@@ -5,6 +5,9 @@ import websockets
 
 # WebSocket 서버 주소
 WEBSOCKET_URL = "wss://4fd7-54-145-137-212.ngrok-free.app/socket"
+USER_ID = "123"
+CHANNEL_ID = "456"
+TITLE = "ddf"
 
 # 스트림 설정
 SAMPLE_RATE = 16000  # 서버와 동일한 샘플링 레이트
@@ -26,7 +29,9 @@ async def audio_stream(loop):
     마이크 입력 데이터를 WebSocket으로 스트리밍합니다.
     """
     global is_streaming
-    async with websockets.connect(WEBSOCKET_URL) as websocket:
+    url_with_params = f"{WEBSOCKET_URL}?user_id={USER_ID}&channel_id={CHANNEL_ID}&title={TITLE}"
+
+    async with websockets.connect(url_with_params) as websocket:
         # Sounddevice 콜백 함수 정의
         def callback(indata, frames, time, status):
             if is_streaming:
