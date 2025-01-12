@@ -197,6 +197,7 @@ def main():
             result, summary = detect_and_summarize(new_text)
             if result == "True":
                 print(f"Topic transition detected. Summary:\n{summary}")
+                save_summary_to_db(postgres_url, table_name, summary, metadata=None())
                 # print("Generating Visualization...")
                 # # visualization
                 # graph = parse_structure_to_graph(summary)
