@@ -130,7 +130,7 @@ Remember:
     rag_chain = (
         {
         "lecture_transcript": itemgetter("query") | retriever,
-        "question": itemgetter("query"),
+        "query": itemgetter("query"),
         "qa_history": itemgetter("qa_history"),
     }
         | rag_prompt
@@ -162,7 +162,7 @@ Remember:
     try:
         # 응답 생성
         response = chain_with_history.invoke(
-            {"question": query},
+            {"query": query},
             config={"configurable": {"session_id": "abc123"}},
         )
         
