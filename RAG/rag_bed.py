@@ -1,16 +1,9 @@
-import pandas as pd
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain import hub
 from langchain_postgres.vectorstores import PGVector
-from langchain.schema import Document
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from operator import itemgetter
-import psycopg2
 from langchain_aws import ChatBedrock
 import boto3
 from langchain_aws import BedrockEmbeddings

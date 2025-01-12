@@ -1,7 +1,6 @@
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_postgres.vectorstores import PGVector
-from langchain_openai import OpenAIEmbeddings
 from langchain.schema import Document
 import boto3        
 from langchain_aws import BedrockEmbeddings

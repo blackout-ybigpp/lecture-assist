@@ -1,8 +1,5 @@
-from langchain_openai import ChatOpenAI
-from langchain.schema import Document
 from dotenv import load_dotenv
 from langchain_aws import ChatBedrock
-from sqlalchemy import create_engine, text
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import networkx as nx
