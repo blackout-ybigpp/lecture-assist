@@ -104,6 +104,6 @@ def mind_map():
     visualize_graph(graph)
     file_name = "mind_map.png"
     file_path = os.path.join(os.getcwd(), file_name)
+    # print(file_path)
     
     return file_path
-
