@@ -197,10 +197,10 @@ def main():
             result, summary = detect_and_summarize(new_text)
             if result == "True":
                 print(f"Topic transition detected. Summary:\n{summary}")
-                print("Generating Visualization...")
-                # visualization
-                graph = parse_structure_to_graph(summary)
-                visualize_graph(graph)
+                # print("Generating Visualization...")
+                # # visualization
+                # graph = parse_structure_to_graph(summary)
+                # visualize_graph(graph)
             else:
                 print("No topic transition detected. Waiting for more input.")
         except Exception as e:
