@@ -66,7 +66,7 @@ def visualize_graph(G, title="Lecture Summary Visualization"):
     plt.show()
     plt.savefig('plot.png')
 
-def detect_and_summarize(transcript, new_text):
+def detect_and_summarize(new_text):
     """
     Analyze the transcript to determine topic transitions and provide summaries if detected.
     """
@@ -197,7 +197,7 @@ def main():
             print("Exiting summarization.")
             break
         try:
-            result, summary = detect_and_summarize(accumulated_transcript, new_text)
+            result, summary = detect_and_summarize(new_text)
             if result == "True":
                 print(f"Topic transition detected. Summary:\n{summary}")
                 print("Generating Visualization...")
