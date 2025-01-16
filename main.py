@@ -1,5 +1,4 @@
 import asyncio
-import httpx
 
 import boto3
 from amazon_transcribe.client import TranscribeStreamingClient
@@ -48,7 +47,7 @@ class MyEventHandler(TranscriptResultStreamHandler):
             for alt in result.alternatives:
                 transcript = alt.transcript
                 logger.info(f"Transcript received: {transcript}")  # 텍스트 로그 출력
-                await self.send_webhook(WEBHOOK_URL, {"text": transcript})
+                # await self.send_webhook(WEBHOOK_URL, {"text": transcript})
                 buffer.append(transcript)  # 버퍼에 텍스트 추가
 
                 # 현재 버퍼의 총 토큰 수 계산
@@ -58,9 +57,9 @@ class MyEventHandler(TranscriptResultStreamHandler):
                 if total_tokens >= max_tokens:
                     await self.save_partial_buffer_to_database()
 
-    async def send_webhook(self, url: str, payload: dict):
-        async with httpx.AsyncClient() as client:
-            await client.post(url, json=payload)
+    # async def send_webhook(self, url: str, payload: dict):
+    #     async with httpx.AsyncClient() as client:
+    #         await client.post(url, json=payload)
 
     async def save_partial_buffer_to_database(self):
         """
@@ -89,6 +88,7 @@ class MyEventHandler(TranscriptResultStreamHandler):
         )
         postgres_url = "postgresql://postgres:blackout-26+@blackout-26-2.cj24wem202yj.us-east-1.rds.amazonaws.com:5432/postgres"
         table_name = "vector_store"
+        bot_main.append_text_canvas(self.transcription_canvas_id, save_text)
         process_stt_and_update(
             [
                 {
@@ -103,9 +103,8 @@ class MyEventHandler(TranscriptResultStreamHandler):
         result, summary = sum_sen.detect_and_summarize(save_text)
         if result == "True":
             print(f"Topic transition detected. Summary:\n{summary}")
-            sum_sen.save_summary_to_db(postgres_url, table_name, summary, metadata=None)
-            bot_main.append_text_canvas(self.transcription_canvas_id, save_text)
             bot_main.append_text_canvas(self.summarize_canvas_id, summary)
+            sum_sen.save_summary_to_db(postgres_url, table_name, summary, metadata=None)
 
 
 async def websocket_audio_stream(websocket: WebSocket):
@@ -159,8 +158,8 @@ async def start_transcription(
     # AWS Transcribe 이벤트 처리 핸들러
     handler = MyEventHandler(stream.output_stream)
     handler.set_canvas(
-        bot_main.create_canvas(title, user_id, channel_id),
-        bot_main.create_canvas(title, user_id, channel_id),
+        bot_main.create_canvas(title+"전문", user_id, channel_id),
+        bot_main.create_canvas(title+"요약", user_id, channel_id),
     )
 
     # 데이터 전송 및 이벤트 핸들링
